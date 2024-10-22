@@ -7,8 +7,7 @@ pub mod anchor_vault_q424 {
     use super::*;
 
     pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
-        msg!("Greetings from: {:?}", ctx.program_id);
-        Ok(())
+        ctx.accounts.initialize(&ctx.bumps)
     }
 }
 
