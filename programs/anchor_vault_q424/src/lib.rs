@@ -18,7 +18,7 @@ pub struct Initialize<'info> {
     #[account(
         init,
         payer = user,
-        space = VaultState::INIT_SPACE,
+        space = 8 + VaultState::INIT_SPACE,
         seeds = [b"state", user.key().as_ref()],
         bump
     )]
@@ -70,6 +70,13 @@ impl<'info> Payment<'info> {
             from: self.user.to_account_info(),
             to: self.vault.to_account_info()
         };
+        let seeds = &[
+            b"vault",
+            self.state.to_account_info().key.as_ref(),
+            &[self.state.vault_bump]
+        ];
+        
+        let signer_seeds = &[&seeds[..]];
 
         let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
 
