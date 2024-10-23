@@ -9,6 +9,14 @@ pub mod anchor_vault_q424 {
     pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
         ctx.accounts.initialize(&ctx.bumps)
     }
+
+    pub fn deposit(ctx: Context<Payment>, amount: u64) -> Result<()> {
+        ctx.accounts.deposit(amount)
+    }
+
+    pub fn withdraw(ctx: Context<Payment>, amount: u64) -> Result<()> {
+        ctx.accounts.withdraw(amount)
+    }
 }
 
 #[derive(Accounts)]
@@ -62,14 +70,31 @@ pub struct Payment<'info> {
 }
 
 impl<'info> Payment<'info> {
-    pub fn deposit(&mut self, amount: u64)-> Result<()> {
+    pub fn deposit(&mut self, amount: u64) -> Result<()> {
 
         let cpi_program = self.system_program.to_account_info();
 
         let cpi_accounts = Transfer {
             from: self.user.to_account_info(),
-            to: self.vault.to_account_info()
+            to: self.vault.to_account_info(),
         };
+
+        let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
+
+        transfer(cpi_ctx, amount)?;
+
+        Ok(())
+    }
+
+    pub fn withdraw(&mut self, amount: u64) -> Result<()> {
+
+        let cpi_program = self.system_program.to_account_info();
+
+        let cpi_accounts = Transfer {
+            from: self.vault.to_account_info(),
+            to: self.user.to_account_info(),
+        };
+
         let seeds = &[
             b"vault",
             self.state.to_account_info().key.as_ref(),
@@ -78,13 +103,9 @@ impl<'info> Payment<'info> {
         
         let signer_seeds = &[&seeds[..]];
 
-        let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
+        let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer_seeds);
 
-        transfer(cpi_ctx, amount)
-
-    }
-
-    pub fn withdraw(&mut self, )-> Result<()> {
+        transfer(cpi_ctx, amount)?;
 
         Ok(())
     }
